@@ -1,0 +1,7 @@
+keras
+pandas
+numpy
+scipy
+matplotlib
+pydot
+chatterbot-corpus
