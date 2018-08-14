@@ -14,7 +14,7 @@ max_sentence_length = 40
 batch_size = 64  # Batch size for training.
 batch_data = 512
 epochs = 200  # Number of epochs to train for.
-vocab_size = 20000
+vocab_size = 30000
 latent_dim = 2048  # Latent dimensionality of the encoding space
 enc_tokenizer = Tokenizer(vocab_size)  # The encoding tokenizer being used.
 dec_tokenizer = Tokenizer(vocab_size)  # The decoding tokenizer being used.
@@ -26,7 +26,7 @@ to_ask_for_test = ['how are you',
 print("Gathering data...")
 translator = str.maketrans('', '', string.punctuation)
 raw_data = []
-end = 50000
+end = 100000
 counter = 0
 # with gzip.open("master_data.txt.gz") as f:
 with open('full_conversation.txt') as f:
@@ -163,7 +163,10 @@ def test(zz, xx):
 
             # Sample a token
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            sampled_word = dec_tokenizer.index_word[sampled_token_index]
+            if sampled_token_index != 0:
+                sampled_word = dec_tokenizer.index_word[sampled_token_index]
+            else:
+                sampled_word = "OOV"
             decoded_sentence.append(sampled_word)
 
             if (sampled_word == 'eoseoseos' or len(decoded_sentence) > max_decoder_seq_length):
