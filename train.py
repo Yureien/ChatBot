@@ -11,11 +11,11 @@ from chatterbot_corpus import corpus
 
 # Constants
 max_sentence_length = 40
-batch_size = 128  # Batch size for training.
+batch_size = 64  # Batch size for training.
 batch_data = 512
 epochs = 200  # Number of epochs to train for.
-vocab_size = 10000
-latent_dim = 2048  # Latent dimensionality of the encoding space
+vocab_size = 20000
+latent_dim = 3072  # Latent dimensionality of the encoding space
 enc_tokenizer = Tokenizer(vocab_size)  # The encoding tokenizer being used.
 dec_tokenizer = Tokenizer(vocab_size)  # The decoding tokenizer being used.
 to_ask_for_test = ['how are you',
@@ -26,7 +26,7 @@ to_ask_for_test = ['how are you',
 print("Gathering data...")
 translator = str.maketrans('', '', string.punctuation)
 raw_data = []
-end = 100000
+end = 50000
 counter = 0
 # with gzip.open("master_data.txt.gz") as f:
 with open('full_conversation.txt') as f:
