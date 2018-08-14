@@ -11,7 +11,7 @@ from chatterbot_corpus import corpus
 
 # Constants
 max_sentence_length = 40
-batch_size = 32  # Batch size for training.
+batch_size = 128  # Batch size for training.
 batch_data = 512
 epochs = 200  # Number of epochs to train for.
 vocab_size = 10000
@@ -26,7 +26,7 @@ to_ask_for_test = ['how are you',
 print("Gathering data...")
 translator = str.maketrans('', '', string.punctuation)
 raw_data = []
-end = 15000
+end = 100000
 counter = 0
 # with gzip.open("master_data.txt.gz") as f:
 with open('full_conversation.txt') as f:
