@@ -11,11 +11,11 @@ from chatterbot_corpus import corpus
 
 # Constants
 max_sentence_length = 40
-batch_size = 8  # Batch size for training.
+batch_size = 32  # Batch size for training.
 batch_data = 512
 epochs = 200  # Number of epochs to train for.
 vocab_size = 10000
-latent_dim = 1024  # Latent dimensionality of the encoding space
+latent_dim = 2048  # Latent dimensionality of the encoding space
 enc_tokenizer = Tokenizer(vocab_size)  # The encoding tokenizer being used.
 dec_tokenizer = Tokenizer(vocab_size)  # The decoding tokenizer being used.
 to_ask_for_test = ['how are you',
