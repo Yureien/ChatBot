@@ -1,4 +1,4 @@
-import gzip
+# import gzip
 import string
 import numpy as np
 from keras.preprocessing.text import Tokenizer
@@ -10,13 +10,14 @@ from chatterbot_corpus import corpus
 
 
 # Constants
-max_sentence_length = 50
-batch_size = 64  # Batch size for training.
-batch_data = 1000
-epochs = 50  # Number of epochs to train for.
-latent_dim = 256  # Latent dimensionality of the encoding space
-enc_tokenizer = Tokenizer(10000)  # The encoding tokenizer being used.
-dec_tokenizer = Tokenizer(10000)  # The decoding tokenizer being used.
+max_sentence_length = 40
+batch_size = 8  # Batch size for training.
+batch_data = 512
+epochs = 200  # Number of epochs to train for.
+vocab_size = 10000
+latent_dim = 1024  # Latent dimensionality of the encoding space
+enc_tokenizer = Tokenizer(vocab_size)  # The encoding tokenizer being used.
+dec_tokenizer = Tokenizer(vocab_size)  # The decoding tokenizer being used.
 to_ask_for_test = ['how are you',
                    'what is your name',
                    'is earth flat']
@@ -25,7 +26,7 @@ to_ask_for_test = ['how are you',
 print("Gathering data...")
 translator = str.maketrans('', '', string.punctuation)
 raw_data = []
-end = 16000
+end = 15000
 counter = 0
 # with gzip.open("master_data.txt.gz") as f:
 with open('full_conversation.txt') as f:
@@ -67,8 +68,8 @@ output_sp_texts = ['sossossos ' + t + ' eoseoseos' for t in output_sp_texts]
 print("Tokenizing data...")
 enc_tokenizer.fit_on_texts(input_texts + input_sp_texts)
 dec_tokenizer.fit_on_texts(output_texts + output_sp_texts)
-num_decoder_tokens = len(dec_tokenizer.word_counts) + 1
-num_encoder_tokens = len(enc_tokenizer.word_counts) + 1
+num_decoder_tokens = vocab_size
+num_encoder_tokens = vocab_size
 max_encoder_seq_length = max([len(txt.split()) for txt in input_texts] +
                              [len(txt.split()) for txt in input_sp_texts])
 max_decoder_seq_length = max([len(txt.split()) for txt in output_texts] +
@@ -79,41 +80,36 @@ print("Max sentence length (encoder):", max_encoder_seq_length)
 print("Max sentence length (decoder):", max_decoder_seq_length)
 
 print("Vectorising data...")
-encoder_input_data = np.zeros(
-    (len(input_texts), max_encoder_seq_length),
-    dtype='float32')
-decoder_input_data = np.zeros(
-    (len(input_texts), max_decoder_seq_length),
-    dtype='float32')
+encoder_input_data = np.array(
+    [xi+[0]*(max_encoder_seq_length - len(xi))
+     for xi in enc_tokenizer.texts_to_sequences(input_texts)]
+)
+decoder_input_data = np.array(
+    [xi+[0]*(max_decoder_seq_length - len(xi))
+     for xi in dec_tokenizer.texts_to_sequences(output_texts)]
+)
 decoder_target_data = np.zeros(
     (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
     dtype='float32')
-encoder_sp_input_data = np.zeros(
-    (len(input_sp_texts), max_encoder_seq_length),
-    dtype='float32')
-decoder_sp_input_data = np.zeros(
-    (len(input_sp_texts), max_decoder_seq_length),
-    dtype='float32')
+encoder_sp_input_data = np.array(
+    [xi+[0]*(max_encoder_seq_length - len(xi))
+     for xi in enc_tokenizer.texts_to_sequences(input_sp_texts)]
+)
+decoder_sp_input_data = np.array(
+    [xi+[0]*(max_decoder_seq_length - len(xi))
+     for xi in dec_tokenizer.texts_to_sequences(output_sp_texts)]
+)
 decoder_sp_target_data = np.zeros(
     (len(input_sp_texts), max_decoder_seq_length, num_decoder_tokens),
     dtype='float32')
-
-for i, (input_text, output_text) in enumerate(zip(input_texts, output_texts)):
-    for t, txt in enumerate(input_text.split()):
-        encoder_input_data[i, t] = enc_tokenizer.word_index[txt]
-    for t, txt in enumerate(output_text.split()):
-        decoder_input_data[i, t] = dec_tokenizer.word_index[txt]
-        if t > 0:
-            decoder_target_data[i, t - 1, dec_tokenizer.word_index[txt]] = 1.
-
-for i, (input_text, output_text) in enumerate(zip(input_sp_texts, output_sp_texts)):
-    for t, txt in enumerate(input_text.split()):
-        encoder_sp_input_data[i, t] = enc_tokenizer.word_index[txt]
-    for t, txt in enumerate(output_text.split()):
-        decoder_sp_input_data[i, t] = dec_tokenizer.word_index[txt]
-        if t > 0:
-            decoder_sp_target_data[i, t - 1, dec_tokenizer.word_index[txt]] = 1.
-
+for t, i in enumerate(decoder_input_data):
+    for tt, j in enumerate(i):
+        if tt > 0:
+            decoder_target_data[t, tt - 1, j] = 1.
+for t, i in enumerate(decoder_sp_input_data):
+    for tt, j in enumerate(i):
+        if tt > 0:
+            decoder_sp_target_data[t, tt - 1, j] = 1.
 
 # Model
 print("Creating the model...")
@@ -132,7 +128,7 @@ decoder_outputs = decoder_dense(decoder_outputs)
 
 model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
 print("Plotting model...")
-# plot_model(model, to_file='model_training.png')
+plot_model(model, to_file='model_training.png')
 
 
 def test(zz, xx):
@@ -201,12 +197,10 @@ def test(zz, xx):
         print(' '.join(out).replace('PAD', ''))
 
     for s2a in to_ask_for_test:
-        test_input_data = np.zeros((1, max_encoder_seq_length), dtype='float32')
-        try:
-            for t, w in enumerate(s2a.split()):
-                test_input_data[0, t] = enc_tokenizer.word_index[w]
-        except KeyError:
-            continue
+        test_input_data = np.array(
+            [xi+[0]*(max_encoder_seq_length - len(xi))
+             for xi in enc_tokenizer.texts_to_sequences([s2a])]
+        )
         output = decode_sequence(test_input_data)
         print('Custom input:', s2a)
         print('Output:')
