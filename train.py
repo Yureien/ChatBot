@@ -220,7 +220,7 @@ for ep in range(epochs):
     dec_tar_trimmed = decoder_target_data[start_idx:start_idx + batch_data, :, :]
     model.fit([enc_inp_trimmed, dec_inp_trimmed], dec_tar_trimmed,
               batch_size=batch_size,
-              epochs=4,
+              epochs=7,
               verbose=1, callbacks=[print_callback])
     model.fit([encoder_sp_input_data, decoder_sp_input_data], decoder_sp_target_data,
               batch_size=batch_size,
